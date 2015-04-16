@@ -1,11 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
+
 from uuidfield import UUIDField
 
 from quickbooks.qbxml import QBXML
 class QWCTicket(models.Model):
     ticket = UUIDField(auto=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
     active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -21,7 +22,7 @@ class ReceiveResponse(models.Model):
         return "%s" %(self.ticket)
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL)
     company_file = models.CharField(max_length=2500, default='', blank=True)
     major_version = models.CharField(max_length=2500, default='', blank=True)
     minor_version = models.CharField(max_length=2500, default='', blank=True)
@@ -32,7 +33,7 @@ class UserProfile(models.Model):
 class MessageQue(models.Model):
     name = models.CharField(default='Query', max_length=2500)
     description = models.TextField(blank=True, null=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
     message = models.TextField()
     active = models.BooleanField(default=True)
     repeat = models.BooleanField(default=False)
@@ -246,3 +247,55 @@ class QBItem(models.Model):
     def __unicode__(self):
         return unicode(self.full_name)
         # return "ss"
+
+class QBVendor(models.Model):
+
+    name = models.CharField(max_length=2500, blank=True, null=True)
+    first_name = models.CharField(max_length=2500, blank=True, null=True)  # FirstName
+    middle_name = models.CharField(max_length=2500, blank=True, null=True)  # MiddleName
+    last_name = models.CharField(max_length=2500, blank=True, null=True)  # LastName
+    full_name = models.CharField(max_length=2500, blank=True, null=True)  # FullName
+    company_name = models.CharField(max_length=2500, blank=True, null=True) # CompanyName
+    salutation = models.CharField(max_length=2500, blank=True, null=True)  # Salutation
+    job_title = models.CharField(max_length=2500, blank=True, null=True)  # JobTitle
+    phone = models.CharField(max_length=2500, blank=True, null=True)  # Phone
+    alt_phone = models.CharField(max_length=2500, blank=True, null=True)  # AltPhone
+    fax = models.CharField(max_length=2500, blank=True, null=True)  # Fax
+    email = models.CharField(max_length=2500, blank=True, null=True)  # Email
+    contact = models.CharField(max_length=2500, blank=True, null=True)  # Contact
+    alt_contact = models.CharField(max_length=2500, blank=True, null=True)  # AltContact
+    notes = models.CharField(max_length=2500, blank=True, null=True)  # Notes
+    account_number = models.CharField(max_length=2500, blank=True, null=True)  # AccountNumber
+    credit_limit = models.CharField(max_length=2500, blank=True, null=True)  # CreditLimit
+    vendor_tax_ident = models.CharField(max_length=2500, blank=True, null=True)
+    list_id = models.CharField(max_length=2500, primary_key=True)  # ListID
+    is_pending = models.CharField(max_length=2500, blank=True, null=True)  # IsPending
+    edit_sequence = models.CharField(max_length=2500, blank=True, null=True)  # EditSequence
+
+    def __unicode__(self):
+        return unicode(self.full_name)
+
+class QBBill(models.Model):
+
+    txn_date = models.CharField(max_length=255, blank=True, null=True) # TxnDate
+    due_date = models.CharField(max_length=255, blank=True, null=True) # DueDate
+    ref_number = models.CharField(max_length=2500, blank=True, null=True) # RefNumber
+    memo = models.CharField(max_length=2500, blank=True, null=True) # Memo
+    exchange_rate = models.CharField(max_length=2500, blank=True, null=True) # ExchangeRate
+
+    list_id = models.CharField(max_length=2500, primary_key=True)  # ListID
+    is_pending = models.CharField(max_length=2500, blank=True, null=True)  # IsPending
+    edit_sequence = models.CharField(max_length=2500, blank=True, null=True)  # EditSequence
+    vendor_ref = models.ForeignKey("QBVendor", blank=True, null=True) # VendorRef
+
+    expense_line_add = models.ManyToManyField("ExpenseLineAdd", blank=True, null=True)  
+
+
+class ExpenseLineAdd(models.Model):
+
+    account_ref = models.ForeignKey("QBAccount", blank=True, null=True) # AccountRef
+    amount = models.CharField(max_length=2500, blank=True, null=True) # Amount
+    memo = models.CharField(max_length=2500, blank=True, null=True)
+    customer_ref = models.ForeignKey("QBCustomer", blank=True, null=True)
+
+
