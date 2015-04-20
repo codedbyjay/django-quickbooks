@@ -157,59 +157,71 @@ class QBXML:
 
         expense_line_add_list = []
         for expense_line in expense_line_add:
-            account_ref = expense_line.get("account_ref")
-            amount = expense_line.get("amount")
-            memo = expense_line.get("memo")
-            customer_ref = expense_line.get("customer_ref")
-            expense_line_add_list.append(
-                ('ExpenseLineAdd', [
-                    ('AccountRef', 
-                        [
-                            ('ListID', account_ref.list_id),
-                            ('FullName', account_ref.full_name)
-                        ]
-                    ),
-                    ('Amount', amount),
-                    ('Memo', memo),
-                    ('CustomerRef', 
-                        [
-                            ('ListID', customer_ref.list_id),
-                            ('FullName', customer_ref.full_name)
-                        ]
-                    )
-                ])
-            )
-
+            account_ref = expense_line.get("account_ref", None)
+            amount = expense_line.get("amount", "")
+            memo = expense_line.get("memo", "")
+            customer_ref = expense_line.get("customer_ref", None)
+            ordered_dict = OrderedDict()
+            if account_ref:
+                ordered_dict['AccountRef'] = OrderedDict([
+                        ("ListID", account_ref.list_id),
+                        ("FullName", account_ref.full_name)
+                    ])
+            ordered_dict['Amount'] = amount
+            ordered_dict['Memo'] = memo
+            if customer_ref:
+                ordered_dict['CustomerRef'] = OrderedDict([
+                        ("ListID", customer_ref.list_id),
+                        ("FullName", customer_ref.full_name)
+                    ])
+            expense_line_add_list.append(ordered_dict)
 
         options = [
-            ('TxnDate', txn_date),
+            ('VendorRef',   
+                OrderedDict([
+                    ('ListID', vendor_ref.list_id),
+                    ('FullName', vendor_ref.full_name),
+                ])
+            ),
+            ('TxnDate' , txn_date),
             ('DueDate', due_date),
             ('RefNumber', ref_number),
             ('Memo', memo),
-            ('VendorRef', [
-                ('ListID', vendor_ref.list_id),
-                ('FullName', vendor_ref.full_name),
-            ])
+            ('ExpenseLineAdd', expense_line_add_list)
         ]
 
-        options.extend(expense_line_add_list)
-
-        if name == None:
-            name = 'Created Vendor in %s %s quickbooks' % (first_name, last_name)
+        name = 'Created Bill in quickbooks'
         MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Bill', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
         return ""
 
 
 
-    def add_invoice(self, client, subtotal=None, discount=None, tax=None, ident=22):
+    def add_invoice(self, client=None, memo=None, ref_number=None, items=[], ident=22):
         from quickbooks.models import MessageQue
 
         user = get_user_model().objects.get(username='quickbooks')
 
-        options = [
-            ('CustomerRef', {'ListID': '80002D16-1424209265'}),
-        ]
+        options = []
+        if client:
+            options.append(
+                ('CustomerRef', OrderedDict(
+                    [
+                        ('ListID', client.list_id),
+                        ('FullName', client.full_name)
+                    ]
+                ))
+            )
+        options.append(('RefNumber', ref_number,))
+        options.append(('Memo', memo,))
+        line_items = []
+        for (item, qty, total) in items:
+            line_items.append(OrderedDict([
+                ("Desc", item),
+                ("Quantity", qty),
+                ("Amount", total)
+            ]))
+        options.append(('InvoiceLineAdd', line_items))
         MessageQue.objects.create(name='Invoice created',
                                   message=self.__build_xml_add_mod('Invoice', 'Add', 'rq', options=options,
                                                                    request_id=ident), user=user)
@@ -229,6 +241,24 @@ class QBXML:
             options.update({'FromModifiedDate': date_from})
 
         MessageQue.objects.create(name=name, message=self.__build_xml(name='Customer', options=options), user=user)
+
+    def get_accounts(self, date_from=None):
+        """
+        :param date_from: need to be a date in format "2014-06-05"
+        :return:
+        """
+        # This will get all customers FIXME: add FROM option
+        from quickbooks.models import MessageQue
+
+        user = get_user_model().objects.get(username='quickbooks')
+        name = 'Get All Accounts'
+        options = {}
+        if date_from:
+            options.update({'FromModifiedDate': date_from})
+
+        MessageQue.objects.create(name=name, message=self.__build_xml(name='Account', options=options), user=user)
+
+
 
     def get_invoices(self, date_from=None):
         """
@@ -295,7 +325,7 @@ class QBXML:
         if date_from:
             options.update({'FromModifiedDate': date_from})
 
-        MessageQue.objects.create(name=name, message=self.__build_xml(name='Items', options=options), user=user)
+        MessageQue.objects.create(name=name, message=self.__build_xml(name='Item', options=options), user=user)
 
 
     def create_query(self, name, repeat=False, active=True):
