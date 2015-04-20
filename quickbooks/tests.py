@@ -136,9 +136,11 @@ class QuickbooksQBXML(TestCase):
             }
         }
         xml = self.qbxml.xml_prefix + xmltodict.unparse(c, full_document=False)
-        request = self.factory.post("/quickbooks/")
-        print(xml)
+        request = self.factory.post("/quickbooks/", xml, content_type="application/xml")
         response = home(request)
-
-
-
+        self.assertEquals(response.status_code, 200)
+        self.assertTrue(QBBill.objects.filter(txn_id="1000").exists())
+        bill = QBBill.objects.get(txn_id="1000")
+        self.assertEquals(bill.account_ref, self.account)
+        self.assertEquals(bill.customer_ref, self.customer)
+        # count the many to many field items
