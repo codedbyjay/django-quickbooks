@@ -205,9 +205,19 @@ class QBInvoice(models.Model):
     list_id = models.CharField(max_length=2500, primary_key=True)  # ListID
     is_pending = models.CharField(max_length=2500, blank=True, null=True)  # IsPending
     edit_sequence = models.CharField(max_length=2500, blank=True, null=True)  # EditSequence
+    invoice_line_add = models.ManyToManyField("QBInvoiceLineAdd", blank=True, null=True)
 
     def __str__(self):
         return self.subtotal
+
+class QBInvoiceLineAdd(models.Model):
+    desc = models.CharField(max_length=2500, blank=True, null=True)
+    quantity = models.CharField(max_length=2500, blank=True, null=True)
+    unit_of_measure = models.CharField(max_length=2500, blank=True, null=True)
+    amount = models.CharField(max_length=2500, blank=True, null=True)
+
+    def __unicode__(self):
+        return self.desc
 
 class QBItem(models.Model):
     item_desc = models.CharField(max_length=2500, blank=True, null=True) # ItemDesc
@@ -278,6 +288,7 @@ class QBVendor(models.Model):
 class QBBill(models.Model):
 
     txn_date = models.CharField(max_length=255, blank=True, null=True) # TxnDate
+    txn_id = models.CharField(max_length=255, blank=True, null=True) # TxnID
     due_date = models.CharField(max_length=255, blank=True, null=True) # DueDate
     ref_number = models.CharField(max_length=2500, blank=True, null=True) # RefNumber
     memo = models.CharField(max_length=2500, blank=True, null=True) # Memo
