@@ -84,6 +84,32 @@ class QBCustomer(models.Model):
     def __str__(self):
         return "%s" %(self.name.encode('utf-8'))
 
+class QBEmployee(models.Model):
+
+    list_id = models.CharField(max_length=2500, primary_key=True)  # ListID
+    first_name = models.CharField(max_length=2500, blank=True, null=True)  # FirstName
+    middle_name = models.CharField(max_length=2500, blank=True, null=True)  # MiddleName
+    last_name = models.CharField(max_length=2500, blank=True, null=True)  # LastName
+    full_name = models.CharField(max_length=2500, blank=True, null=True)  # FullName
+    name = models.CharField(max_length=2500, blank=True, null=True)  # Name
+
+    notes = models.CharField(max_length=2500, blank=True, null=True)  # Notes
+    phone = models.CharField(max_length=2500, blank=True, null=True)  # Phone
+    fax = models.CharField(max_length=2500, blank=True, null=True)  # Fax
+    city = models.CharField(max_length=2500, blank=True, null=True)  # City
+    contact = models.CharField(max_length=2500, blank=True, null=True)  # Contact
+    account_number = models.CharField(max_length=2500, blank=True, null=True)  # AccountNumber
+    company_name = models.CharField(max_length=2500, blank=True, null=True)  # CompanyName
+    is_active = models.CharField(max_length=2500, blank=True, null=True)  # IsActive
+    edit_sequence = models.CharField(max_length=2500, blank=True, null=True)  # EditSequence
+    time_created = models.CharField(max_length=2500, blank=True, null=True)  # TimeCreated
+    time_modified = models.CharField(max_length=2500, blank=True, null=True)  # TimeModified
+    salutation = models.CharField(max_length=2500, blank=True, null=True)  # Salutation
+    email = models.CharField(max_length=2500, blank=True, null=True)  # Email
+
+    def __str__(self):
+        return "%s" %(self.name.encode('utf-8'))
+
 class QBAccount(models.Model):
     cash_flow_classification = models.CharField(max_length=2500, blank=True, null=True)  # CashFlowClassification
     account_number = models.CharField(max_length=2500, blank=True, null=True)  # AccountNumber
