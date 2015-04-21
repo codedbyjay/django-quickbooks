@@ -1,12 +1,14 @@
 import os
 import logging as log
 import re
+from pprint import pprint
 
 from django.db.models import get_app, get_models
 from django.shortcuts import HttpResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
+from django.db.models.fields.related import OneToOneField, ForeignKey
 
 from lxml import etree
 
@@ -48,11 +50,33 @@ def show_wsdl(request):
         contents = f.read()
     return HttpResponse(contents, content_type='text/xml')
 
+def get_model(qn):
+    ms = get_models()
+    m = None
+    for model in ms:
+        if model.__name__ == 'QB' + qn:
+            m = model
+    return m
+
+def has_m2m_field(m, field_name):
+    return field_name in [f.name for f in m._meta.many_to_many]
+
+def has_related_field(m, field_name):
+    return field_name in [f.name for f in m._meta.fields if isinstance(f, ForeignKey)]    
+
+def get_related_fk_model(m, field_name):
+    return m._meta.get_field(field_name).rel.to
+
+def has_field(m, field_name):
+    """ Has a regular field (not relation)
+    """
+    return field_name in [f.name for f in m._meta.fields if not isinstance(f, ForeignKey)]
 
 @csrf_exempt
 def home(request):
     c = request.body
-    # logging.debug(c)
+    print(c[:200])
+    logging.debug(c)
     if request.method == "GET":
         logging.debug("kdhohdjdhdj")
         return HttpResponse('The request need to be POST')
@@ -170,47 +194,87 @@ def home(request):
                 resp = ReceiveResponse.objects.create(ticket=tick, response=response, name=receive_query_name)
                 # Let's try to do something with this response now!
                 qn = re.sub("([A-Z])", " \g<0>", receive_query_name).split(" ")[1]
+                print("RESPONSE TYPE: %s" % receive_query_name)
                 logging.info("THAT IS ===> %s" %(qn))
                 if qn in QBXML().names:
                     # does that model name  exists ? if so enter data in that thing
-                    ms = get_models()
-                    m = None
-                    for model in ms:
-                        if model.__name__ == 'QB' + qn:
-                            m = model
+                    m = get_model(qn)
                     if m != None:
                         logging.debug("Model does exist")
+                        print("Model exists for %s" % qn)
+                        with open("xml", "w") as f:
+                            f.write(c)
                         items = receive_plain[0][0]
                         logging.debug('items are ==> %s', str(items))
+                        print('items are ==> %s', str(items))
+                        list_id, txn_id = None, None
+                        ids = {}
                         for item in items:
                             t = {}
+                            m2m_data = {}
                             for it in item:
+                                converted_tag = convert(it.tag)
                                 logging.debug('items => %s' %(str(it.tag)))
                                 if it.tag == 'ListID':
                                     list_id = it.text
+                                    ids["list_id"] = list_id
                                     logging.debug("listid is %s" %(str(list_id)))
-                                t.update({convert(it.tag): it.text})
+                                elif it.tag == 'TxnID':
+                                    txn_id = it.text
+                                    ids["txn_id"] = txn_id
+                                if len(it):
+                                    # This is a nested item
+                                    if has_related_field(m, converted_tag):
+                                        print("HEYYY %s has a related field" % converted_tag)
+                                        nested_attr = {}
+                                        related_model = get_related_fk_model(m, converted_tag)
+                                        nested_list_id = None
+                                        for itt in it:
+                                            converted_nested_tag = convert(itt.tag)
+                                            if itt.tag == "ListID":
+                                                print("Found nested list ID: %s" % itt.text)
+                                                nested_list_id = itt.text
+                                            if has_field(related_model, converted_nested_tag): # only save fields, not fk fields or m2m fields
+                                                nested_attr.update({converted_nested_tag: itt.text})
+                                            else:
+                                                print("%s wasn't found on %s" % (converted_nested_tag, related_model))
+                                        if nested_attr and nested_list_id:
+                                            related_obj, created = related_model.objects.update_or_create(defaults=nested_attr, list_id=nested_list_id)
+                                            t[converted_tag] = related_obj
+                                    elif has_m2m_field(m, converted_tag):
+                                        print("HEYYY %s has a M2M field" % converted_tag)
+                                elif has_field(m, converted_tag):
+                                    t.update({converted_tag: it.text})
                             # but first.. does that already exists ?
                             logging.debug("qbwc %s" %(t))
-                            if list_id:
-                                m.objects.update_or_create(list_id=t['list_id'], defaults=t)
+                            print("Will look for objects matching %s and update with the following attributes... " % ids)
+                            pprint(t)
+                            if ids:
+                                obj, created = m.objects.update_or_create(defaults=t, **ids)
+                                # Deal with the m2m models 
                             else:
-                                logging.debug("no list_id strange ?? ")
+                                logging.debug("no list_id or txn_id strange ?? ")
                             # Do something if this response was a Response , maybe update the database with relationship?
                             logging.debug('Check if we need to do something after handling with a response')
 
                             # First get related objects of the selected model hope it is only one.
                             request_id = receive_plain[0][0].attrib['requestID']
-                            if list_id and request_id:
+                            if ids and request_id:
                                 logging.debug(request_id)
                                 for md in m._meta.get_all_related_objects():
                                     logging.debug('Looking for models')
                                     logging.debug(md)
-                                    mod = md.model.objects.filter(pk=request_id)[0]
+                                    try:
+                                        mod = md.model.objects.filter(pk=request_id)[0]
+                                    except IndexError:
+                                        mod = None
                                     if mod:
-                                        mod.quickbooks = m.objects.get(pk=list_id)
+                                        pk = ids.get(ids.keys()[0])
+                                        if pk:
+                                            mod.quickbooks = m.objects.get(pk=pk)
                                         mod.save()
-
+                                    else:
+                                        print("No model found to object")
                             else:
                                 logging.debug('Nothing found in settings')
 
