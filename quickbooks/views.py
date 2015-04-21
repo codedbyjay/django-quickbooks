@@ -328,7 +328,7 @@ def get_items():
 def welcome(request):
     return HttpResponse('<h1>Use /quickbooks</h1>', content_type='text/html')
 
-class GetCompanyFileView(View):
+class GetQWCFileView(View):
 
     def get_qwc_file(self):
         return generate_qbc_file()
