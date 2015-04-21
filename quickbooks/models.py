@@ -325,7 +325,8 @@ class QBBill(models.Model):
     edit_sequence = models.CharField(max_length=2500, blank=True, null=True)  # EditSequence
     vendor_ref = models.ForeignKey("QBVendor", blank=True, null=True) # VendorRef
 
-    expense_line_add = models.ManyToManyField("ExpenseLineAdd", blank=True, null=True)  
+    expense_line_add = models.ManyToManyField("ExpenseLineAdd", blank=True, null=True)
+    item_line_add = models.ManyToManyField("QBItemLineAdd", blank=True, null=True)
 
 
 class ExpenseLineAdd(models.Model):
@@ -336,3 +337,16 @@ class ExpenseLineAdd(models.Model):
     customer_ref = models.ForeignKey("QBCustomer", blank=True, null=True)
 
 
+class QBItemLineAdd(models.Model):
+
+    item_ref = models.ForeignKey("QBItem", blank=True, null=True) # ItemRef
+    serial_number = models.CharField(max_length=255, blank=True, null=True) # SerialNumber
+    lot_number = models.CharField(max_length=255, blank=True, null=True) # LotNumber
+    desc = models.CharField(max_length=255, blank=True, null=True) # Desc
+    quantity = models.CharField(max_length=255, blank=True, null=True) # Quantity
+    amount = models.CharField(max_length=2500, blank=True, null=True) # Amount
+    cost = models.CharField(max_length=255, blank=True, null=True) # Cost
+    unit_of_measure = models.CharField(max_length=255, blank=True, null=True) # UnitOfMeasure
+    memo = models.CharField(max_length=2500, blank=True, null=True) # Memo
+    customer_ref = models.ForeignKey("QBCustomer", blank=True, null=True) # CustomerRef
+    sales_rep_ref = models.ForeignKey("QBEmployee", blank=True, null=True)
