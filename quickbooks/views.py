@@ -9,6 +9,7 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
 from django.db.models.fields.related import OneToOneField, ForeignKey
+from django.views.generic import View
 
 from lxml import etree
 
@@ -327,7 +328,12 @@ def get_items():
 def welcome(request):
     return HttpResponse('<h1>Use /quickbooks</h1>', content_type='text/html')
 
-def get_company_file(request):
-    response = HttpResponse(generate_qbc_file(), content_type='text/xml')
-    response['Content-Disposition'] = 'attachment; filename="quickbooks.QWC"'
-    return response
+class GetCompanyFileView(View):
+
+    def get_qwc_file(self):
+        return generate_qbc_file()
+
+    def get(self, request):
+        response = HttpResponse(self.get_qwc_file(), content_type='text/xml')
+        response['Content-Disposition'] = 'attachment; filename="quickbooks.QWC"'
+        return response
