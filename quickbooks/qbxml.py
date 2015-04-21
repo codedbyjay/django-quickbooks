@@ -176,6 +176,46 @@ class QBXML:
                     ])
             expense_line_add_list.append(ordered_dict)
 
+        item_line_add_list = []
+        for item_line in item_line_add:
+            sales_rep_ref = item_line.get("sales_rep_ref", None)
+            customer_ref = item_line.get("customer_ref", None)
+            item_ref = item_line.get("item_ref", None)
+            serial_number = item_line.get("serial_number", "")
+            lot_number = item_line.get("lot_number", "")
+            desc = item_line.get("desc", "")
+            quantity = item_line.get("quantity")
+            amount = item_line.get("amount")
+            cost = item_line.get("cost")
+            unit_of_measure = item_line.get("unit_of_measure", "")
+            memo = item_line.get("memo", "")
+            ordered_dict = OrderedDict()
+            if item_ref:
+                ordered_dict["ItemRef"] = OrderedDict([
+                        ("ListID", item_ref.list_id),
+                        ("FullName", item_ref.full_name)
+                    ])
+            if serial_number:
+                ordered_dict["SerialNumber"] = serial_number
+            elif lot_number:
+                ordered_dict["LotNumber"] = lot_number
+            ordered_dict["Desc"] = desc
+            ordered_dict["Quantity"] = quantity
+            ordered_dict["UnitOfMeasure"] = unit_of_measure
+            ordered_dict["Cost"] = cost
+            ordered_dict["Amount"] = amount
+            if customer_ref:
+                ordered_dict["CustomerRef"] = OrderedDict([
+                        ("ListID", customer_ref.list_id),
+                        ("FullName", customer_ref.full_name)
+                    ])
+            if sales_rep_ref:
+                ordered_dict["SalesRepRef"] = OrderedDict([
+                        ("ListID", sales_rep_ref.list_id),
+                        ("FullName", sales_rep_ref.full_name)
+                    ])
+            item_line_add_list.append(ordered_dict)
+
         options = [
             ('VendorRef',   
                 OrderedDict([
@@ -187,8 +227,12 @@ class QBXML:
             ('DueDate', due_date),
             ('RefNumber', ref_number),
             ('Memo', memo),
-            ('ExpenseLineAdd', expense_line_add_list)
         ]
+
+        if expense_line_add_list:
+            options.append(('ExpenseLineAdd', expense_line_add_list))
+        elif item_line_add_list:
+            options.append(('ItemLineAdd', item_line_add_list))
 
         name = 'Created Bill in quickbooks'
         MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Bill', 'Add', 'rq', options=options,
