@@ -194,7 +194,7 @@ def home(request):
                 logging.debug('response is %s' % (response))
                 resp = ReceiveResponse.objects.create(ticket=tick, response=response, name=receive_query_name)
                 # Let's try to do something with this response now!
-                qn = re.sub("([A-Z])", " \g<0>", receive_query_name).split(" ")[1]
+                qn = "".join(re.sub("([A-Z])", " \g<0>", receive_query_name).split(" ")[1:-1])
                 print("RESPONSE TYPE: %s" % receive_query_name)
                 logging.info("THAT IS ===> %s" %(qn))
                 if qn in QBXML().names:
