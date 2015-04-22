@@ -281,7 +281,7 @@ class QBItem(models.Model):
     is_active = models.CharField(max_length=2500, blank=True, null=True) # IsActive
 
     def __unicode__(self):
-        return unicode(self.full_name)
+        return unicode(self.name) 
         # return "ss"
 
 class QBVendor(models.Model):
@@ -350,3 +350,16 @@ class QBItemLineAdd(models.Model):
     memo = models.CharField(max_length=2500, blank=True, null=True) # Memo
     customer_ref = models.ForeignKey("QBCustomer", blank=True, null=True) # CustomerRef
     sales_rep_ref = models.ForeignKey("QBEmployee", blank=True, null=True)
+
+
+class QBItemPayment(models.Model):
+
+    list_id = models.CharField(max_length=2500, primary_key=True)  # ListID
+    name = models.CharField(max_length=255, blank=True, null=True) # Name
+    item_desc = models.CharField(max_length=255, blank=True, null=True) # ItemDesc
+    edit_sequence = models.CharField(max_length=2500, blank=True, null=True)  # EditSequence
+    time_created = models.CharField(max_length=2500, blank=True, null=True)  # TimeCreated
+    time_modified = models.CharField(max_length=2500, blank=True, null=True)  # TimeModified
+    
+    def __unicode__(self):
+        return self.name
