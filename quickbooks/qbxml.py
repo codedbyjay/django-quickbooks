@@ -20,6 +20,7 @@ class QBXML:
             'Vendor',
             'ToDo',
             'Item',
+            'ItemPayment',
             'SalesReceipt',
         ]
 
@@ -38,11 +39,10 @@ class QBXML:
         """
         method = method.title()
         request = request.title()
-        name = name.title()
         return name + method + request
 
     def __build_rq_name(self, name, method):
-        return name.title() + method.title()
+        return name + method.title()
 
 
     def __build__json(self, name, method='query', request='rq', request_id=None):
@@ -85,7 +85,7 @@ class QBXML:
                     '@onError': 'stopOnError',
                     self.__build_name(name, method=method, request=request): {
                         '@requestID': str(request_id),
-                        str(name).title() + str(method).title():
+                        str(name) + str(method).title():
                             OrderedDict(options)
 
                     }
