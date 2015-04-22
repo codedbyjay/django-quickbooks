@@ -110,9 +110,8 @@ class QBXML:
 
         if name == None:
             name = 'Created Customer in %s %s quickbooks' % (first_name, last_name)
-        MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Customer', 'Add', 'rq', options=options,
+        return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Customer', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
-        return ""
 
     def edit_customer(self, list_id, first_name=None, last_name=None, ident=0, edit_sequence=0):
         from quickbooks.models import MessageQue
@@ -127,7 +126,7 @@ class QBXML:
             ('LastName', last_name),
         ]
         name = 'Edited Customer in %s %s quickbooks' % (first_name, last_name)
-        MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Customer', 'Mod', 'rq', options=options,
+        return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Customer', 'Mod', 'rq', options=options,
                                                                               request_id=ident), user=user)
 
     def add_vendor(self, name=None, first_name=None, last_name=None, company_name=None, ident=0):
@@ -144,12 +143,11 @@ class QBXML:
 
         if name == None:
             name = 'Created Vendor in %s %s quickbooks' % (first_name, last_name)
-        MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Vendor', 'Add', 'rq', options=options,
+        return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Vendor', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
-        return ""
 
     def add_bill(self, vendor_ref, txn_date=None, due_date=None, ref_number=None, memo=None, 
-            expense_line_add=[], ident=0):
+            expense_line_add=[], item_line_add=[], ident=0):
 
         from quickbooks.models import MessageQue
 
@@ -235,9 +233,8 @@ class QBXML:
             options.append(('ItemLineAdd', item_line_add_list))
 
         name = 'Created Bill in quickbooks'
-        MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Bill', 'Add', 'rq', options=options,
+        return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Bill', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
-        return ""
 
 
 
@@ -266,7 +263,7 @@ class QBXML:
                 ("Amount", total)
             ]))
         options.append(('InvoiceLineAdd', line_items))
-        MessageQue.objects.create(name='Invoice created',
+        return MessageQue.objects.create(name='Invoice created',
                                   message=self.__build_xml_add_mod('Invoice', 'Add', 'rq', options=options,
                                                                    request_id=ident), user=user)
 
@@ -284,7 +281,24 @@ class QBXML:
         if date_from:
             options.update({'FromModifiedDate': date_from})
 
-        MessageQue.objects.create(name=name, message=self.__build_xml(name='Customer', options=options), user=user)
+        return MessageQue.objects.create(name=name, message=self.__build_xml(name='Customer', options=options), user=user)
+
+    def get_employees(self, date_from=None):
+        """
+        :param date_from: need to be a date in format "2014-06-05"
+        :return:
+        """
+        # This will get all customers FIXME: add FROM option
+        from quickbooks.models import MessageQue
+
+        user = get_user_model().objects.get(username='admin')
+        name = 'Get All Employees'
+        options = {}
+        if date_from:
+            options.update({'FromModifiedDate': date_from})
+
+        return MessageQue.objects.create(name=name, message=self.__build_xml(name='Employee', options=options), user=user)
+
 
     def get_accounts(self, date_from=None):
         """
@@ -300,7 +314,7 @@ class QBXML:
         if date_from:
             options.update({'FromModifiedDate': date_from})
 
-        MessageQue.objects.create(name=name, message=self.__build_xml(name='Account', options=options), user=user)
+        return MessageQue.objects.create(name=name, message=self.__build_xml(name='Account', options=options), user=user)
 
 
 
@@ -318,7 +332,7 @@ class QBXML:
         if date_from:
             options.update({'FromModifiedDate': date_from})
 
-        MessageQue.objects.create(name=name, message=self.__build_xml(name='Customer', options=options), user=user)
+        return MessageQue.objects.create(name=name, message=self.__build_xml(name='Customer', options=options), user=user)
 
     def get_vendors(self, date_from=None):
         """
@@ -334,7 +348,7 @@ class QBXML:
         if date_from:
             options.update({'FromModifiedDate': date_from})
 
-        MessageQue.objects.create(name=name, message=self.__build_xml(name='Vendor', options=options), user=user)
+        return MessageQue.objects.create(name=name, message=self.__build_xml(name='Vendor', options=options), user=user)
 
 
     def get_bills(self, date_from=None):
@@ -351,7 +365,7 @@ class QBXML:
         if date_from:
             options.update({'FromModifiedDate': date_from})
 
-        MessageQue.objects.create(name=name, message=self.__build_xml(name='Bill', options=options), user=user)
+        return MessageQue.objects.create(name=name, message=self.__build_xml(name='Bill', options=options), user=user)
 
 
     def add_item_payment(self, name=None, item_desc=None, ident=0):
@@ -364,10 +378,8 @@ class QBXML:
             ('ItemDesc', item_desc),
         ]
 
-        MessageQue.objects.create(name="Created ItemPayment %s in quickbooks" % name, message=self.__build_xml_add_mod('ItemPayment', 'Add', 'rq', options=options,
-                                                                              request_id=ident), user=user)
-        return ""
-
+        return MessageQue.objects.create(name="Created ItemPayment %s in quickbooks" % name, message=self.__build_xml_add_mod('ItemPayment', 'Add', 'rq', options=options,
+          request_id=ident), user=user)
 
     def get_items(self, date_from=None):
         """
@@ -383,14 +395,14 @@ class QBXML:
         if date_from:
             options.update({'FromModifiedDate': date_from})
 
-        MessageQue.objects.create(name=name, message=self.__build_xml(name='Item', options=options), user=user)
+        return MessageQue.objects.create(name=name, message=self.__build_xml(name='Item', options=options), user=user)
 
 
     def create_query(self, name, repeat=False, active=True):
         user = get_user_model().objects.get(username='quickbooks')
         from quickbooks.models import MessageQue
 
-        MessageQue.objects.create(name=name, message=self.__build_xml(name, request_id=3333), user=user)
+        return MessageQue.objects.create(name=name, message=self.__build_xml(name, request_id=3333), user=user)
 
 
     def initial(self):
