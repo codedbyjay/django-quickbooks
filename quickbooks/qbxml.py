@@ -354,6 +354,20 @@ class QBXML:
         MessageQue.objects.create(name=name, message=self.__build_xml(name='Bill', options=options), user=user)
 
 
+    def add_item_payment(self, name=None, item_desc=None, ident=0):
+        from quickbooks.models import MessageQue
+
+        user = get_user_model().objects.get(username='admin')
+
+        options = [
+            ('Name', name),
+            ('ItemDesc', item_desc),
+        ]
+
+        MessageQue.objects.create(name="Created ItemPayment %s in quickbooks" % name, message=self.__build_xml_add_mod('ItemPayment', 'Add', 'rq', options=options,
+                                                                              request_id=ident), user=user)
+        return ""
+
 
     def get_items(self, date_from=None):
         """
