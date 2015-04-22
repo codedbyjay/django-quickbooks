@@ -1,6 +1,16 @@
 # Message that the quickbooks webconnector is sending for me
 from quickbooks.uttils import xml_soap
 
+REQUEST_CLOSE_CONNECTION = 'closeConnection'
+REQUEST_AUTHENTICATE = 'authenticate'
+REQUEST_RECEIVE_REQUEST = 'receiveResponseXML'
+REQUEST_SEND_REQUEST = 'sendRequestXML'
+REQUEST_CONNECTION_ERROR = 'connectionError'
+REQUEST_GET_INTERACTIVE_URL = 'getInteractiveUrl'
+REQUEST_INTERACTIVE_DONE = 'interactiveDone'
+REQUEST_GET_LAST_ERROR = 'getLastError'
+REQUEST_SERVER_VERSION = 'serverVersion'
+REQUEST_CLIENT_VERSION = 'clientVersion'
 
 close_connection = """<?xml version="1.0" encoding="UTF-8"?>
 <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://developer.intuit.com/">
