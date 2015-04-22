@@ -18,12 +18,7 @@ from quickbooks.models import UserProfile
 from quickbooks.models import ReceiveResponse
 from quickbooks.models import MessageQue
 
-from quickbooks.qwc_xml import authenticated
-from quickbooks.qwc_xml import failed
-from quickbooks.qwc_xml import close_connection
-from quickbooks.qwc_xml import processed
-from quickbooks.qwc_xml import process_failed
-from quickbooks.qwc_xml import qrequest
+from quickbooks.qwc_xml import *
 
 from quickbooks.uttils import convert
 from quickbooks.uttils import xml_soap
@@ -73,10 +68,29 @@ def has_field(m, field_name):
     """
     return field_name in [f.name for f in m._meta.fields if not isinstance(f, ForeignKey)]
 
+def get_request_type(root):
+    request_types = [
+        REQUEST_AUTHENTICATE, 
+        REQUEST_RECEIVE_REQUEST,
+        REQUEST_SEND_REQUEST,
+        REQUEST_CLOSE_CONNECTION,
+        REQUEST_CONNECTION_ERROR,
+        REQUEST_GET_INTERACTIVE_URL,
+        REQUEST_INTERACTIVE_DONE,
+        REQUEST_GET_LAST_ERROR,
+        REQUEST_SERVER_VERSION,
+        REQUEST_CLIENT_VERSION
+    ]
+    cont = root[0][0]
+    for request_type in request_types:
+        if cont.tag == tag(request_type, 'intuit'):
+            return request_type
+    return None
+
+
 @csrf_exempt
 def home(request):
     c = request.body
-    print(c[:200])
     logging.debug(c)
     if request.method == "GET":
         logging.debug("kdhohdjdhdj")
@@ -87,11 +101,15 @@ def home(request):
     parser = etree.XMLParser(huge_tree=True)
     contents = etree.parse(request, parser)
     root = contents.getroot()
+    request_type = get_request_type(root)
+    print('REQUEST TYPE RECEIVED IS: %s ========================================' % (request_type or 'Unkown'))
+    if request_type:
+        print etree.tostring(root, pretty_print=True)    
 
     # We need to listen to authenticate, token or error.
     cont = root[0][0]
     ticket = cont.find(tag('ticket'))
-    if cont.tag == tag('authenticate', 'intuit'):
+    if request_type == REQUEST_AUTHENTICATE:
         logging.debug('Authentication call detected')
         username = cont.find(tag('strUserName')).text
         password = cont.find(tag('strPassword')).text
@@ -147,7 +165,7 @@ def home(request):
         list_id = None
         logging.debug('LIST ID ====>> %s', str(list_id))
         logging.debug(send_request)
-        if send_request != None:
+        if request_type == REQUEST_SEND_REQUEST:
             logging.debug("sendRequestXML detected tags will appear below:")
             for child in send_request:
                 logging.debug(child.tag)
@@ -179,14 +197,14 @@ def home(request):
         else:
             logging.debug("sendRequestXML Not detected")
 
-        if receive_response != None:
+        if request_type == REQUEST_RECEIVE_REQUEST:
             logging.debug(receive_response.text)
             tick = QWCTicket.objects.get(ticket=ticket.text)
             response = receive_response[1].text
             request_id = None
             try:
                 receive_plain = etree.fromstring(response)
-                receive_query_name = etree.fromstring(response)[0][0].tag[:-2]
+                receive_query_name = receive_plain[0][0].tag[:-2]
             except Exception, e:
                 logging.debug("Error it apears like response is empty")
                 logging.error(e)
@@ -283,6 +301,7 @@ def home(request):
                         if settings.DEBUG:
 
                             logging.debug("Model does not exist")
+                            print('No model exists for %s' % qn)
                             # this model does not exist, what about making a file with all it's data maybe we can use it
                             # Dump it only if debug is set to True (DEBUG=True)
                             # if it does not catch here remember to look in qbxml().names
