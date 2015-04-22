@@ -97,7 +97,7 @@ class QBXML:
     def invoice(self):
         return ""
 
-    def add_customer(self, name=None, first_name=None, last_name=None, ident=0):
+    def add_customer(self, first_name=None, last_name=None, ident=0):
         from quickbooks.models import MessageQue
 
         user = get_user_model().objects.get(username='quickbooks')
@@ -108,8 +108,7 @@ class QBXML:
             ('LastName', last_name),
         ]
 
-        if name == None:
-            name = 'Created Customer in %s %s quickbooks' % (first_name, last_name)
+        name = 'Created Customer in %s %s quickbooks' % (first_name, last_name)
         return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Customer', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
 
@@ -298,6 +297,22 @@ class QBXML:
             options.update({'FromModifiedDate': date_from})
 
         return MessageQue.objects.create(name=name, message=self.__build_xml(name='Employee', options=options), user=user)
+
+    def add_employee(self, first_name=None, last_name=None, ident=0):
+        from quickbooks.models import MessageQue
+
+        user = get_user_model().objects.get(username='admin')
+
+        options = [
+            ('Name', "%s, %s" % (last_name, first_name)),
+            ('FirstName', first_name),
+            ('LastName', last_name),
+        ]
+
+        name = 'Created Employee %s %s in quickbooks' % (first_name, last_name)
+        return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Employee', 'Add', 'rq', options=options,
+                                                                              request_id=ident), user=user)
+
 
 
     def get_accounts(self, date_from=None):
