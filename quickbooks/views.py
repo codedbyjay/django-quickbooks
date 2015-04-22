@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
 from django.db.models.fields.related import OneToOneField, ForeignKey
 from django.views.generic import View
+import django.dispatch
 
 from lxml import etree
 
@@ -34,9 +35,10 @@ if hasattr(settings, 'QUICKBOOKS_RESPONSE'):
 else:
     QSETTINGS = QUICKBOOKS_RESPONSE
 
-
-
 logging = log.getLogger(__name__)
+
+request_received = django.dispatch.Signal(providing_args=["request_type", "root", "qbxml"])
+
 
 
 @csrf_exempt
@@ -104,7 +106,13 @@ def home(request):
     request_type = get_request_type(root)
     print('REQUEST TYPE RECEIVED IS: %s ========================================' % (request_type or 'Unkown'))
     if request_type:
-        print etree.tostring(root, pretty_print=True)    
+        print etree.tostring(root, pretty_print=True)   
+
+    # Dispatch the signal
+    qbxml = None
+    if request_type == REQUEST_RECEIVE_REQUEST:
+        qbxml = etree.fromstring(root[0].find(tag('receiveResponseXML'))[1].text)
+    request_received.send_robust(sender=type(request), root=root, qbxml=qbxml)
 
     # We need to listen to authenticate, token or error.
     cont = root[0][0]
