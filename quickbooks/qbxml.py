@@ -312,6 +312,21 @@ class QBXML:
         name = 'Created Employee %s %s in quickbooks' % (first_name, last_name)
         return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Employee', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
+    def edit_employee(self, list_id, first_name=None, last_name=None, ident=0, edit_sequence=0):
+        from quickbooks.models import MessageQue
+
+        user = get_user_model().objects.get(username='admin')
+
+        options = [
+            ('ListID', list_id),
+            ('EditSequence', edit_sequence),
+            ('Name', "%s, %s" % (last_name, first_name)),
+            ('FirstName', first_name),
+            ('LastName', last_name),
+        ]
+        name = 'Edited Employee %s %s in quickbooks' % (first_name, last_name)
+        return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Employee', 'Mod', 'rq', options=options,
+                                                                              request_id=ident), user=user)
 
 
 
