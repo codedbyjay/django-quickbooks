@@ -145,6 +145,24 @@ class QBXML:
         return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Vendor', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
 
+    def edit_vendor(self, list_id, first_name=None, last_name=None, ident=0, edit_sequence=0):
+        from quickbooks.models import MessageQue
+
+        user = get_user_model().objects.get(username='admin')
+
+        options = [
+            ('ListID', list_id),
+            ('EditSequence', edit_sequence),
+            ('Name', "%s, %s" % (last_name, first_name)),
+            ('FirstName', first_name),
+            ('LastName', last_name),
+        ]
+        name = 'Edited Vendor %s %s in quickbooks' % (first_name, last_name)
+        return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Vendor', 'Mod', 'rq', options=options,
+                                                                              request_id=ident), user=user)
+
+
+
     def add_bill(self, vendor_ref, txn_date=None, due_date=None, ref_number=None, memo=None, 
             expense_line_add=[], item_line_add=[], ident=0):
 
