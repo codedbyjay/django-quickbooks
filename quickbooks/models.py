@@ -322,6 +322,7 @@ class QBBill(models.Model):
 
     list_id = models.CharField(max_length=2500, primary_key=True)  # ListID
     is_pending = models.CharField(max_length=2500, blank=True, null=True)  # IsPending
+    is_paid = models.CharField(max_length=2500, blank=True, null=True) # IsPaid
     edit_sequence = models.CharField(max_length=2500, blank=True, null=True)  # EditSequence
     vendor_ref = models.ForeignKey("QBVendor", blank=True, null=True) # VendorRef
 
