@@ -108,7 +108,7 @@ class QBEmployee(models.Model):
     email = models.CharField(max_length=2500, blank=True, null=True)  # Email
 
     def __str__(self):
-        return "%s" %(self.name.encode('utf-8'))
+        return "%s, %s" % (self.last_name, self.first_name)
 
 class QBAccount(models.Model):
     cash_flow_classification = models.CharField(max_length=2500, blank=True, null=True)  # CashFlowClassification
