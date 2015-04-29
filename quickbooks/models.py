@@ -268,7 +268,7 @@ class QBItem(models.Model):
     income_account_ref = models.CharField(max_length=2500, blank=True, null=True) # IncomeAccountRef
     quantity_on_hand = models.CharField(max_length=2500, blank=True, null=True) # QuantityOnHand
     discount_rate = models.CharField(max_length=2500, blank=True, null=True) # DiscountRate
-    sales_or_purchase = models.CharField(max_length=2500, blank=True, null=True) # SalesOrPurchase
+    sales_or_purchase = models.ForeignKey("QBSalesOrPurchase", blank=True, null=True) # SalesOrPurchase
     account_ref = models.CharField(max_length=2500, blank=True, null=True) # AccountRef
     is_print_items_in_group = models.CharField(max_length=2500, blank=True, null=True) # IsPrintItemsInGroup
     time_created = models.CharField(max_length=2500, blank=True, null=True) # TimeCreated
@@ -283,6 +283,12 @@ class QBItem(models.Model):
     def __unicode__(self):
         return unicode(self.name) 
         # return "ss"
+
+class QBSalesOrPurchase(models.Model):
+
+    price = models.CharField(max_length=2500, blank=True, null=True)
+    account_ref = models.ForeignKey("QBAccount", blank=True, null=True)
+
 
 class QBVendor(models.Model):
 
