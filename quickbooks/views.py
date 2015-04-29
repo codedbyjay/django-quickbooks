@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
 from django.db.models.fields.related import OneToOneField, ForeignKey
 from django.views.generic import View
+from django.utils import timezone
 import django.dispatch
 
 from lxml import etree
@@ -38,8 +39,8 @@ else:
 logging = log.getLogger(__name__)
 
 request_received = django.dispatch.Signal(providing_args=["request_type", "root", "qbxml"])
-
-
+session_started = django.dispatch.Signal(providing_args=["start_time", "authenticated"])
+session_ended = django.dispatch.Signal(providing_args=["end_time", "result", "message"])
 
 @csrf_exempt
 def show_wsdl(request):
@@ -58,6 +59,10 @@ def get_model(qn):
 
 def has_m2m_field(m, field_name):
     return field_name in [f.name for f in m._meta.many_to_many]
+
+
+def get_related_field(m, field_name):
+    return m._meta.get_field(field_name)
 
 def has_related_field(m, field_name):
     return field_name in [f.name for f in m._meta.fields if isinstance(f, ForeignKey)]    
@@ -112,7 +117,7 @@ def home(request):
     qbxml = None
     if request_type == REQUEST_RECEIVE_REQUEST:
         qbxml = etree.fromstring(root[0].find(tag('receiveResponseXML'))[1].text)
-    request_received.send_robust(sender=type(request), root=root, qbxml=qbxml)
+    request_received.send(sender=type(request), request_type=request_type, root=root, qbxml=qbxml)
 
     # We need to listen to authenticate, token or error.
     cont = root[0][0]
@@ -125,6 +130,7 @@ def home(request):
         # Authenticate with database
         a = authenticate(username=username, password=password)
         if a:
+            session_started.send(sender=type(request), start_time=timezone.localtime(timezone.now()), authenticated=True)
             logging.debug('Valid Authentication username and password user: %s' % (a.username))
             # everything active need to be inactive
             ac = QWCTicket.objects.filter(user=a, active=True)
@@ -145,6 +151,8 @@ def home(request):
             return HttpResponse(authenticated % (ti.ticket, s), content_type='text/xml')
         else:
             logging.debug('invalid user detected username: %s password %s' % (username, password))
+            session_started.send(sender=type(request), start_time=timezone.localtime(timezone.now()), authenticated=False)
+            session_ended.send(sender=type(request), end_time=timezone.localtime(timezone.now()), result=False, message="Invalid username or password supplied")
             return HttpResponse(failed, content_type='text/xml')
 
     if ticket is not None:
@@ -199,6 +207,7 @@ def home(request):
                 # delete tickets and messages that are not in use:
                 MessageQue.objects.filter(repeat=False, active=False).delete()
                 QWCTicket.objects.filter(active=False).delete()
+                session_ended.send(sender=type(request), end_time=timezone.localtime(timezone.now()), result=True, message="All messages processed successfully")
                 return HttpResponse(close_connection % ("Finished!"), content_type='text/xml')
 
             return HttpResponse(close_connection % (100), content_type='text/xml')
@@ -252,21 +261,27 @@ def home(request):
                                 if len(it):
                                     # This is a nested item
                                     if has_related_field(m, converted_tag):
-                                        print("HEYYY %s has a related field" % converted_tag)
+                                        print("HEYYY %s has %s as a related field" % (m, converted_tag))
                                         nested_attr = {}
                                         related_model = get_related_fk_model(m, converted_tag)
-                                        nested_list_id = None
+                                        related_field = get_related_field(m, converted_tag)
+                                        related_name = related_field.related_query_name()
+                                        nested_list_ids = {}
                                         for itt in it:
                                             converted_nested_tag = convert(itt.tag)
                                             if itt.tag == "ListID":
                                                 print("Found nested list ID: %s" % itt.text)
-                                                nested_list_id = itt.text
+                                                nested_list_ids["ListID"] = itt.text
                                             if has_field(related_model, converted_nested_tag): # only save fields, not fk fields or m2m fields
                                                 nested_attr.update({converted_nested_tag: itt.text})
                                             else:
-                                                print("%s wasn't found on %s" % (converted_nested_tag, related_model))
-                                        if nested_attr and nested_list_id:
-                                            related_obj, created = related_model.objects.update_or_create(defaults=nested_attr, list_id=nested_list_id)
+                                                print("%s isn't a normal field on %s, it maybe a relation... we're not currently doing nested relations tho..." % (converted_nested_tag, related_model))
+                                        if not nested_list_ids and ids:
+                                            # If the nested model doesn't have a ListID on it, try and find it by the relationship
+                                            for _id, val in ids.items():
+                                                nested_list_ids["%s__%s" % (related_name, _id)] = val
+                                        if nested_attr and nested_list_ids:
+                                            related_obj, created = related_model.objects.update_or_create(defaults=nested_attr, **nested_list_ids)
                                             t[converted_tag] = related_obj
                                     elif has_m2m_field(m, converted_tag):
                                         print("HEYYY %s has a M2M field" % converted_tag)
