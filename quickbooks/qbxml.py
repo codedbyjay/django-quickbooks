@@ -108,7 +108,7 @@ class QBXML:
             ('LastName', last_name),
         ]
 
-        name = 'Created Customer in %s %s quickbooks' % (first_name, last_name)
+        name = 'Created Customer %s %s in quickbooks' % (first_name, last_name)
         return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Customer', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
 
@@ -124,7 +124,7 @@ class QBXML:
             ('FirstName', first_name),
             ('LastName', last_name),
         ]
-        name = 'Edited Customer in %s %s quickbooks' % (first_name, last_name)
+        name = 'Edited Customer %s %s in quickbooks' % (first_name, last_name)
         return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Customer', 'Mod', 'rq', options=options,
                                                                               request_id=ident), user=user)
 
@@ -141,7 +141,7 @@ class QBXML:
         ]
 
         if name == None:
-            name = 'Created Vendor in %s %s quickbooks' % (first_name, last_name)
+            name = 'Created Vendor %s %s in quickbooks' % (first_name, last_name)
         return MessageQue.objects.create(name=name, message=self.__build_xml_add_mod('Vendor', 'Add', 'rq', options=options,
                                                                               request_id=ident), user=user)
 
