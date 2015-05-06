@@ -15,6 +15,7 @@ class QBXML:
             'Check',
             'Account',
             'Estimate',
+            'Employee',
             'Invoice',
             'ReceivePayment',
             'Vendor',
