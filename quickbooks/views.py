@@ -271,7 +271,7 @@ def home(request):
                                             converted_nested_tag = convert(itt.tag)
                                             if itt.tag == "ListID":
                                                 print("Found nested list ID: %s" % itt.text)
-                                                nested_list_ids["ListID"] = itt.text
+                                                nested_list_ids[converted_nested_tag] = itt.text
                                             if has_field(related_model, converted_nested_tag): # only save fields, not fk fields or m2m fields
                                                 nested_attr.update({converted_nested_tag: itt.text})
                                             else:
