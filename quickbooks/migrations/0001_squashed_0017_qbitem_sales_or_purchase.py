@@ -359,12 +359,6 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(blank=True, to='quickbooks.QBVendor', null=True),
             preserve_default=True,
         ),
-        migrations.AddField(
-            model_name='qbbill',
-            name='txn_id',
-            field=models.CharField(max_length=255, null=True, blank=True),
-            preserve_default=True,
-        ),
         migrations.CreateModel(
             name='QBInvoiceLineAdd',
             fields=[
