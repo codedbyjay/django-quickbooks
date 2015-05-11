@@ -238,8 +238,6 @@ def home(request):
                     if m != None:
                         logging.debug("Model does exist")
                         print("Model exists for %s" % qn)
-                        with open("xml", "w") as f:
-                            f.write(c)
                         items = receive_plain[0][0]
                         logging.debug('items are ==> %s', str(items))
                         print('items are ==> %s', str(items))
