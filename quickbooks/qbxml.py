@@ -8,7 +8,6 @@ from collections import OrderedDict
 class QBXML:
     def __init__(self, username):
         self.username = username
-        self.user = user
         self.xml_prefix = '''<?xml version="1.0" encoding="utf-8"?><?qbxml version="2.1"?>'''
         self.names = [
             'Customer',
