@@ -6,25 +6,26 @@ import logging
 from collections import OrderedDict
 
 class QBXML:
+
+    NAMES = [
+        'Customer',
+        'Bill',
+        'Account',
+        'Check',
+        'Account',
+        'Estimate',
+        'Employee',
+        'Invoice',
+        'ReceivePayment',
+        'Vendor',
+        'ToDo',
+        'Item',
+        'ItemPayment',
+        'SalesReceipt',
+    ]
     def __init__(self, username):
         self.username = username
         self.xml_prefix = '''<?xml version="1.0" encoding="utf-8"?><?qbxml version="2.1"?>'''
-        self.names = [
-            'Customer',
-            'Bill',
-            'Account',
-            'Check',
-            'Account',
-            'Estimate',
-            'Employee',
-            'Invoice',
-            'ReceivePayment',
-            'Vendor',
-            'ToDo',
-            'Item',
-            'ItemPayment',
-            'SalesReceipt',
-        ]
 
         self.method = [
             'Query',
@@ -431,7 +432,7 @@ class QBXML:
 
     def initial(self):
         msg = []
-        for name in self.names:
+        for name in QBXML.NAMES:
             msg.append({'name': name.lower(), 'message': self.__build_xml(name=name)})
         return msg
 

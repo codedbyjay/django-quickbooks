@@ -232,7 +232,7 @@ def home(request):
                 qn = "".join(re.sub("([A-Z])", " \g<0>", receive_query_name).split(" ")[1:-1])
                 print("RESPONSE TYPE: %s" % receive_query_name)
                 logging.info("THAT IS ===> %s" %(qn))
-                if qn in QBXML().names:
+                if qn in QBXML.NAMES:
                     # does that model name  exists ? if so enter data in that thing
                     m = get_model(qn)
                     if m != None:
