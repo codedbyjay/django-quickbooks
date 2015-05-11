@@ -33,7 +33,7 @@ class QBXML:
         ]
 
     @property
-    def user():
+    def user(self):
         if not self._user:
             self._user = get_user_model().objects.get(username=self.username)
         return self._user
