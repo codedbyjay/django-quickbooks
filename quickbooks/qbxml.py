@@ -34,7 +34,7 @@ class QBXML:
 
     @property
     def user(self):
-        if not self._user:
+        if not hasattr(self, "_user"):
             self._user = get_user_model().objects.get(username=self.username)
         return self._user
 
