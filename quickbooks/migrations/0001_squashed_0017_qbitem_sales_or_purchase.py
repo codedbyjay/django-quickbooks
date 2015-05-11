@@ -315,7 +315,7 @@ class Migration(migrations.Migration):
                 ('ref_number', models.CharField(max_length=2500, null=True, blank=True)),
                 ('memo', models.CharField(max_length=2500, null=True, blank=True)),
                 ('exchange_rate', models.CharField(max_length=2500, null=True, blank=True)),
-                ('list_id', models.CharField(max_length=2500, serialize=False, primary_key=True)),
+                ('txn_id', models.CharField(max_length=2500, serialize=False, primary_key=True)),
                 ('is_pending', models.CharField(max_length=2500, null=True, blank=True)),
                 ('edit_sequence', models.CharField(max_length=2500, null=True, blank=True)),
                 ('expense_line_add', models.ManyToManyField(to=b'quickbooks.ExpenseLineAdd', null=True, blank=True)),
