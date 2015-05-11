@@ -192,8 +192,8 @@ class QBXML:
             lot_number = item_line.get("lot_number", "")
             desc = item_line.get("desc", "")
             quantity = item_line.get("quantity")
-            amount = item_line.get("amount")
             cost = item_line.get("cost")
+            amount = item_line.get("amount")
             unit_of_measure = item_line.get("unit_of_measure", "")
             memo = item_line.get("memo", "")
             ordered_dict = OrderedDict()
@@ -208,7 +208,8 @@ class QBXML:
                 ordered_dict["LotNumber"] = lot_number
             ordered_dict["Desc"] = desc
             ordered_dict["Quantity"] = quantity
-            ordered_dict["UnitOfMeasure"] = unit_of_measure
+            if unit_of_measure:
+                ordered_dict["UnitOfMeasure"] = unit_of_measure
             ordered_dict["Cost"] = cost
             ordered_dict["Amount"] = amount
             if customer_ref:
