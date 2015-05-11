@@ -6,7 +6,8 @@ import logging
 from collections import OrderedDict
 
 class QBXML:
-    def __init__(self, user):
+    def __init__(self, username):
+        self.username = username
         self.user = user
         self.xml_prefix = '''<?xml version="1.0" encoding="utf-8"?><?qbxml version="2.1"?>'''
         self.names = [
@@ -31,6 +32,12 @@ class QBXML:
             'Add',
             'Mod',
         ]
+
+    @property
+    def user():
+        if not self._user:
+            self._user = get_user_model().objects.get(username=self.username)
+        return self._user
 
     def __build_name(self, name='Customer', method='Query', request='Rq'):
         """ Builds the name of the query
