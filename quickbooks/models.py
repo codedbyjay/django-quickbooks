@@ -3,7 +3,10 @@ from django.conf import settings
 
 from uuidfield import UUIDField
 
+
 from quickbooks.qbxml import QBXML
+from quickbooks.qwc_xml import REQUEST_TYPES
+
 class QWCTicket(models.Model):
     ticket = UUIDField(auto=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
@@ -20,6 +23,52 @@ class ReceiveResponse(models.Model):
 
     def __str__(self):
         return "%s" %(self.ticket)
+
+class ResponseError(models.Model):
+
+    status_code = models.PositiveIntegerField()
+    content = models.TextField(blank=True, null=True)
+    reason_phrase = models.TextField(blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+    processed = models.BooleanField(default=False)
+
+    @staticmethod
+    def log_error(request, response):
+        content_type = request.META.get("CONTENT_TYPE")
+        method = request.method
+        if response.status_code != 200 and content_type == "text/xml" and method == 'POST':
+            return ResponseError.objects.create(
+                status_code=response.status_code,
+                content=response.content if hasattr(response, "content") else "",
+                reason_phrase=response.reason_phrase
+            )
+        else:
+            print("Not logging request: %s %s %s" % (content_type, method, response.status_code))
+        return None
+
+    @staticmethod
+    def get_last_error():
+        try:
+            error = ResponseError.objects.filter(processed=False).latest("date")
+            return error
+        except ResponseError.DoesNotExist:
+            return None
+
+class QWCMessage(models.Model):
+    request_type = models.CharField(max_length=255, choices=REQUEST_TYPES)
+    description = models.TextField(blank=True, null=True)
+    message = models.TextField(blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+
+def generate_description(sender, **kwargs):
+    if kwargs["raw"]:
+        return
+    instance = kwargs.get("instance")
+    request_type = instance.request_type
+    description = instance.description
+
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL)
