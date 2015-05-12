@@ -119,6 +119,11 @@ def home(request):
         qbxml = etree.fromstring(root[0].find(tag('receiveResponseXML'))[1].text)
     request_received.send(sender=type(request), request_type=request_type, root=root, qbxml=qbxml)
 
+    if request_type == REQUEST_GET_LAST_ERROR:
+        last_error = ResponseError.get_last_error()
+        message = last_error.message if last_error else ""
+        return HttpResponse(get_last_error % message, content_type='text/xml')
+
     # We need to listen to authenticate, token or error.
     cont = root[0][0]
     ticket = cont.find(tag('ticket'))
