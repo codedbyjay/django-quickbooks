@@ -19,8 +19,12 @@ from quickbooks.models import QWCTicket
 from quickbooks.models import UserProfile
 from quickbooks.models import ReceiveResponse
 from quickbooks.models import MessageQue
+from quickbooks.models import ResponseError
+from quickbooks.models import QWCMessage
 
 from quickbooks.qwc_xml import *
+
+from quickbooks.decorators import catch_errors
 
 from quickbooks.uttils import convert
 from quickbooks.uttils import xml_soap
@@ -96,6 +100,7 @@ def get_request_type(root):
 
 
 @csrf_exempt
+@catch_errors
 def home(request):
     c = request.body
     logging.debug(c)
@@ -109,6 +114,10 @@ def home(request):
     contents = etree.parse(request, parser)
     root = contents.getroot()
     request_type = get_request_type(root)
+    # Log the message
+    QWCMessage.objects.create(request_type=request_type, 
+        message=etree.tostring(root, pretty_print=True)
+    )
     print('REQUEST TYPE RECEIVED IS: %s ========================================' % (request_type or 'Unkown'))
     if request_type:
         print etree.tostring(root, pretty_print=True)   
@@ -121,7 +130,7 @@ def home(request):
 
     if request_type == REQUEST_GET_LAST_ERROR:
         last_error = ResponseError.get_last_error()
-        message = last_error.message if last_error else ""
+        message = last_error.content if last_error else ""
         return HttpResponse(get_last_error % message, content_type='text/xml')
 
     # We need to listen to authenticate, token or error.

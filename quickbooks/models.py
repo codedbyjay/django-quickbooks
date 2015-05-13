@@ -1,10 +1,14 @@
+from datetime import datetime, timedelta
+
 from django.db import models
 from django.conf import settings
+from django.utils.timezone import make_aware
+from django.utils import timezone
 
 from uuidfield import UUIDField
 
 
-from quickbooks.qbxml import QBXML
+from quickbooks.qbxml import *
 from quickbooks.qwc_xml import REQUEST_TYPES
 
 class QWCTicket(models.Model):
@@ -33,23 +37,24 @@ class ResponseError(models.Model):
     processed = models.BooleanField(default=False)
 
     @staticmethod
-    def log_error(request, response):
+    def log_error(request, exception):
+        print("LOGGING ERROR: %s and exception %s" % (type(request), type(exception)))
         content_type = request.META.get("CONTENT_TYPE")
         method = request.method
-        if response.status_code != 200 and content_type == "text/xml" and method == 'POST':
+        if method == 'POST':
             return ResponseError.objects.create(
-                status_code=response.status_code,
-                content=response.content if hasattr(response, "content") else "",
-                reason_phrase=response.reason_phrase
+                status_code=500,
+                content=exception.message,
+                reason_phrase=exception.message
             )
-        else:
-            print("Not logging request: %s %s %s" % (content_type, method, response.status_code))
         return None
 
     @staticmethod
     def get_last_error():
         try:
             error = ResponseError.objects.filter(processed=False).latest("date")
+            error.processed = True
+            error.save()
             return error
         except ResponseError.DoesNotExist:
             return None
@@ -61,12 +66,29 @@ class QWCMessage(models.Model):
     date = models.DateTimeField(auto_now_add=True)
 
 
-def generate_description(sender, **kwargs):
-    if kwargs["raw"]:
-        return
-    instance = kwargs.get("instance")
-    request_type = instance.request_type
-    description = instance.description
+def get_errors_and_messages(date=None):
+    if not date:
+        date = timezone.now() - timedelta(hours=24)
+    message_list = []
+    errors = ResponseError.objects.filter(date__gte=date).order_by('-date')
+    for error in errors:
+        message_list.append(dict(
+                date=error.date,
+                message=error.content,
+                error=True,
+            ))
+
+    messages = QWCMessage.objects.filter(date__gte=date).order_by('-date')
+    for message in messages:
+        message_list.append(dict(
+                date=message.date,
+                message=message.get_request_type_display(),
+                error=False
+            ))
+
+    # Sort all messages
+    message_list.sort(key=lambda message: message.get("date"), reverse=True)
+    return message_list
 
 
 
